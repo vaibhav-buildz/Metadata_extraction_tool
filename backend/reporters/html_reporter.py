@@ -1,5 +1,5 @@
 from jinja2 import Template
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from pathlib import Path
 from datetime import datetime
 
@@ -101,7 +101,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <body>
     <div class="container">
         <header>
-            <h1>🔍 Forensics Report</h1>
+            <h1> Forensics Report</h1>
             <div class="report-meta">
                 <div><strong>File:</strong> {{ filename }}</div>
                 <div><strong>Type:</strong> {{ file_type }}</div>
@@ -153,7 +153,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 class HTMLReporter:
     @staticmethod
-    def generate(metadata: Dict[str, Any], output_path: str = None) -> str:
+    def generate(metadata: Dict[str, Any], output_path: Optional[str] = None) -> str:
         """Generate forensic-style HTML report"""
         template = Template(HTML_TEMPLATE)
         
