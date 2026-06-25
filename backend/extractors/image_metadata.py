@@ -37,12 +37,12 @@ class ImageMetadataExtractor(MetadataExtractor):
                 for ifd_name in ("0th", "Exif", "GPS"):
                     ifd = exif_dict[ifd_name]
                     for tag_id, value in ifd.items():
-                        tag_name = piexif.TAGS[ifd_name][tag_id]["name"].decode()
+                        tag_name = piexif.TAGS[ifd_name][tag_id]["name"]  # already a str, no .decode() needed
                         try:
                             metadata["exif_data"][tag_name] = value.decode() if isinstance(value, bytes) else str(value)
-                        except:
+                        except Exception:
                             metadata["exif_data"][tag_name] = "[binary data]"
-            except:
+            except Exception:
                 metadata["anomalies"].append("No EXIF data found or corrupted")
         
         except Exception as e:

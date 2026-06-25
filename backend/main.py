@@ -44,7 +44,8 @@ async def analyze_file(file: UploadFile = File(...)):
     """Upload and analyze a file for metadata"""
     try:
         # Save temp file
-        with tempfile.NamedTemporaryFile(delete=False, suffix=Path(file.filename).suffix) as tmp:
+        suffix = Path(file.filename).suffix if file.filename else ""
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
             content = await file.read()
             tmp.write(content)
             tmp_path = tmp.name
