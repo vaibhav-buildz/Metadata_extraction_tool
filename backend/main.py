@@ -2,8 +2,13 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
+import sys
 import tempfile
 from pathlib import Path
+
+# Ensure backend subpackages are importable regardless of launch method
+sys.path.insert(0, str(Path(__file__).parent))
+
 from extractors.registry import get_extractor
 from reporters.html_reporter import HTMLReporter
 from reporters.json_reporter import JSONReporter

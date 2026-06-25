@@ -13,7 +13,13 @@ class OfficeMetadataExtractor(MetadataExtractor):
         elif self.file_path.suffix.lower() == '.xlsx':
             return self._extract_xlsx()
         else:
-            return {"error": "PPTX extraction not yet implemented"}
+            return {
+                "file_type": "PowerPoint Presentation",
+                "filename": self.filename,
+                "file_size_bytes": self.file_size,
+                "status": "PPTX extraction not yet implemented",
+                "anomalies": []
+            }
     
     def _extract_docx(self) -> Dict[str, Any]:
         metadata = {

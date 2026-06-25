@@ -158,7 +158,8 @@ class HTMLReporter:
         template = Template(HTML_TEMPLATE)
         
         html = template.render(
-            **metadata,
+            filename=metadata.get("filename", "Unknown"),
+            file_type=metadata.get("file_type", "Unknown"),
             timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             metadata=metadata
         )

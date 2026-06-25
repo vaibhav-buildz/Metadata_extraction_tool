@@ -20,13 +20,13 @@ class PDFMetadataExtractor(MetadataExtractor):
         }
         
         try:
-            with pypdf.PdfReader(str(self.file_path)) as reader:
-                metadata["pages"] = len(reader.pages)
-                metadata["encrypted"] = reader.is_encrypted
-                
-                if reader.metadata:
-                    for key, value in reader.metadata.items():
-                        metadata["document_properties"][key] = str(value)
+            reader = pypdf.PdfReader(str(self.file_path))
+            metadata["pages"] = len(reader.pages)
+            metadata["encrypted"] = reader.is_encrypted
+            
+            if reader.metadata:
+                for key, value in reader.metadata.items():
+                    metadata["document_properties"][key] = str(value)
         except Exception as e:
             metadata["document_properties"]["error"] = str(e)
         
@@ -35,8 +35,7 @@ class PDFMetadataExtractor(MetadataExtractor):
                 links_count = 0
                 images_count = 0
                 for page in pdf.pages:
-                    if page.extract_links():
-                        links_count += len(page.extract_links())
+                    links_count += len(page.hyperlinks)  # correct pdfplumber API
                     if page.images:
                         images_count += len(page.images)
                 
