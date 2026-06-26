@@ -96,3 +96,4 @@ test_*.mp3
 
 # IDE language servers
 .pylsp_plugins/
+frontend-react/.gitignore
