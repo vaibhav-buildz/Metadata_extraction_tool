@@ -68,7 +68,7 @@ class OfficeMetadataExtractor(MetadataExtractor):
                     metadata["anomalies"].append(f"Collaborator/Author mismatch: Document created by '{author}' but last modified by '{last_author}'")
 
     def _extract_docx(self) -> Dict[str, Any]:
-        metadata = {
+        metadata: Dict[str, Any] = {
             "file_type": "Word Document",
             "filename": self.filename,
             "file_size_bytes": self.file_size,
@@ -97,7 +97,7 @@ class OfficeMetadataExtractor(MetadataExtractor):
         return metadata
     
     def _extract_xlsx(self) -> Dict[str, Any]:
-        metadata = {
+        metadata: Dict[str, Any] = {
             "file_type": "Excel Spreadsheet",
             "filename": self.filename,
             "file_size_bytes": self.file_size,
@@ -144,7 +144,7 @@ class OfficeMetadataExtractor(MetadataExtractor):
         return metadata
 
     def _extract_pptx(self) -> Dict[str, Any]:
-        metadata = {
+        metadata: Dict[str, Any] = {
             "file_type": "PowerPoint Presentation",
             "filename": self.filename,
             "file_size_bytes": self.file_size,
@@ -193,10 +193,10 @@ class OfficeMetadataExtractor(MetadataExtractor):
                     ns_app = {'ep': 'http://schemas.openxmlformats.org/officeDocument/2006/extended-properties'}
                     
                     slides_el = root.find('ep:Slides', ns_app)
-                    slides = int(slides_el.text) if slides_el is not None else 0
+                    slides = int(slides_el.text) if slides_el is not None and slides_el.text else 0
                     
                     notes_el = root.find('ep:Notes', ns_app)
-                    notes = int(notes_el.text) if notes_el is not None else 0
+                    notes = int(notes_el.text) if notes_el is not None and notes_el.text else 0
                     
                     presentation = root.find('ep:PresentationFormat', ns_app)
                     fmt = presentation.text if presentation is not None else "Unknown"

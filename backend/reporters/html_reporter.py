@@ -152,7 +152,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
  
 class HTMLReporter:
     @staticmethod
-    def generate(metadata: Dict[str, Any], output_path: str = None) -> str:
+    def generate(metadata: Dict[str, Any], output_path: str | None = None) -> str:
         template = Template(HTML_TEMPLATE)
         render_kwargs = {
             "filename": metadata.get("filename", "Unknown"),

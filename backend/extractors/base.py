@@ -35,7 +35,7 @@ class MetadataExtractor(ABC):
                 return f"Mismatched signature for PNG: header starts with {header[:4].hex().upper()}"
         elif suffix == '.gif':
             if not (header.startswith(b'GIF89a') or header.startswith(b'GIF87a')):
-                return f"Mismatched signature for GIF"
+                return "Mismatched signature for GIF"
         elif suffix == '.pdf':
             if not header.startswith(b'%PDF-'):
                 return f"Mismatched signature for PDF: header starts with {header[:5].decode(errors='replace')}"
@@ -44,13 +44,13 @@ class MetadataExtractor(ABC):
                 return f"Mismatched signature for Office document: header starts with {header[:4].hex().upper()}"
         elif suffix == '.flac':
             if not header.startswith(b'fLaC'):
-                return f"Mismatched signature for FLAC"
+                return "Mismatched signature for FLAC"
         elif suffix == '.ogg':
             if not header.startswith(b'OggS'):
-                return f"Mismatched signature for OGG"
+                return "Mismatched signature for OGG"
         elif suffix == '.wav':
             if not (header.startswith(b'RIFF') and header[8:12] == b'WAVE'):
-                return f"Mismatched signature for WAV"
+                return "Mismatched signature for WAV"
         elif suffix == '.mp3':
             is_mp3 = header.startswith(b'ID3') or (len(header) > 1 and header[0] == 0xFF and (header[1] & 0xE0) == 0xE0)
             if not is_mp3:

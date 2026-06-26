@@ -46,7 +46,7 @@ class ImageMetadataExtractor(MetadataExtractor):
             return {}
 
     def extract(self) -> Dict[str, Any]:
-        metadata = {
+        metadata: Dict[str, Any] = {
             "file_type": "Image",
             "filename": self.filename,
             "file_size_bytes": self.file_size,

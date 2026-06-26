@@ -17,7 +17,7 @@ def get_extractor(file_path: str) -> MetadataExtractor:
     suffix = path.suffix.lower()
     for extractor_class in EXTRACTORS:
         if suffix in extractor_class.supported_extensions:
-            return extractor_class(file_path)
+            return extractor_class(file_path)  # type: ignore[abstract]
     raise ValueError(f"Unsupported: {path.suffix}")
  
 if __name__ == "__main__":

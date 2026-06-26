@@ -7,7 +7,7 @@ class AudioMetadataExtractor(MetadataExtractor):
     supported_extensions = ('.mp3', '.m4a', '.wav', '.flac', '.ogg', '.wma')
     
     def extract(self) -> Dict[str, Any]:
-        metadata = {
+        metadata: Dict[str, Any] = {
             "file_type": "Audio",
             "filename": self.filename,
             "file_size_bytes": self.file_size,

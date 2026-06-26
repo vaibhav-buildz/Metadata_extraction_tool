@@ -8,7 +8,7 @@ class PDFMetadataExtractor(MetadataExtractor):
     supported_extensions = ('.pdf',)
     
     def extract(self) -> Dict[str, Any]:
-        metadata = {
+        metadata: Dict[str, Any] = {
             "file_type": "PDF",
             "filename": self.filename,
             "file_size_bytes": self.file_size,

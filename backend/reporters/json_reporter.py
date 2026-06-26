@@ -5,7 +5,7 @@ from datetime import datetime
  
 class JSONReporter:
     @staticmethod
-    def generate(metadata: Dict[str, Any], output_path: str = None) -> str:
+    def generate(metadata: Dict[str, Any], output_path: str | None = None) -> str:
         report = {
             "report_version": "1.0",
             "timestamp": datetime.now().isoformat(),
