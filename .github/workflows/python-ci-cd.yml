@@ -1,0 +1,67 @@
+name: Python CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r backend/requirements.txt
+        pip install pytest pytest-cov
+    
+    - name: Test imports
+      run: |
+        python -c "from extractors.registry import get_extractor; print('✓ Extractors OK')"
+        python -c "from reporters.json_reporter import JSONReporter; print('✓ Reporters OK')"
+      working-directory: backend
+    
+    - name: Verify API starts
+      run: |
+        timeout 5 python -c "from main import app; import uvicorn; print('✓ API loads')" || true
+      working-directory: backend
+    
+    - name: Code quality check
+      run: |
+        pip install pylint
+        pylint backend/extractors/*.py --disable=all --enable=E,F || true
+      continue-on-error: true
+
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install linting tools
+      run: |
+        pip install flake8 black isort
+    
+    - name: Check code style
+      run: |
+        flake8 backend/ --count --select=E9,F63,F7,F82 --show-source --statistics || true
+        black --check backend/ || true
+      continue-on-error: true

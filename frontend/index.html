@@ -3,39 +3,53 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Metadata Forensics Tool</title>
+  <title>Metadata Forensics - Digital Inspection Tool</title>
+  <meta name="description" content="Reveal hidden EXIF, GPS, IPTC metadata, document structures, and security anomalies in real-time." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
-      --bg-base:    #080d14;
-      --bg-card:    #0f172a;
-      --bg-raised:  #1e293b;
-      --border:     #334155;
-      --border-hi:  #475569;
+      --bg-base:    #030712;
+      --bg-glass:   rgba(17, 24, 39, 0.65);
+      --bg-glass-hi: rgba(31, 41, 55, 0.85);
+      --border:     rgba(75, 85, 99, 0.25);
+      --border-hi:  rgba(249, 115, 22, 0.4);
       --accent:     #f97316;
-      --accent-dim: rgba(249,115,22,0.15);
+      --accent-rgb: 249, 115, 22;
       --accent2:    #38bdf8;
+      --accent2-rgb: 56, 189, 248;
       --red:        #ef4444;
-      --red-dim:    rgba(239,68,68,0.12);
-      --green:      #22c55e;
-      --text-hi:    #f1f5f9;
-      --text-md:    #94a3b8;
-      --text-lo:    #475569;
-      --radius:     10px;
+      --red-dim:    rgba(239, 68, 68, 0.08);
+      --red-border: rgba(239, 68, 68, 0.25);
+      --green:      #10b981;
+      --green-dim:  rgba(16, 185, 129, 0.08);
+      --green-border: rgba(16, 185, 129, 0.25);
+      --text-hi:    #f9fafb;
+      --text-md:    #9ca3af;
+      --text-lo:    #4b5563;
+      --radius-sm:  6px;
+      --radius-md:  12px;
+      --radius-lg:  20px;
+      --shadow-glow: 0 0 20px rgba(249, 115, 22, 0.15);
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     html { scroll-behavior: smooth; }
 
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Plus Jakarta Sans', sans-serif;
       background: var(--bg-base);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(249, 115, 22, 0.05) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.05) 0px, transparent 50%);
       color: var(--text-hi);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      overflow-x: hidden;
     }
 
     /* ── NAV ── */
@@ -45,189 +59,279 @@
       justify-content: space-between;
       padding: 16px 40px;
       border-bottom: 1px solid var(--border);
-      background: rgba(8,13,20,0.95);
+      background: rgba(3, 7, 18, 0.8);
       backdrop-filter: blur(12px);
       position: sticky; top: 0; z-index: 100;
     }
-    .logo {
-      display: flex; align-items: center; gap: 10px;
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 1.1rem; font-weight: 600;
-      color: var(--accent);
-      letter-spacing: 1px;
+    @media (max-width: 640px) {
+      nav { padding: 16px 20px; }
     }
-    .logo-icon { font-size: 1.4rem; }
+    .logo {
+      display: flex; align-items: center; gap: 12px;
+      font-family: 'Fira Code', monospace;
+      font-size: 1.15rem; font-weight: 600;
+      color: var(--text-hi);
+      letter-spacing: -0.5px;
+    }
+    .logo-accent {
+      color: var(--accent);
+      text-shadow: 0 0 10px rgba(var(--accent-rgb), 0.3);
+    }
+    .logo-icon { font-size: 1.4rem; animation: pulse 2s infinite; }
     .nav-badge {
-      font-size: 0.7rem; padding: 3px 8px;
-      background: var(--accent-dim); border: 1px solid var(--accent);
-      border-radius: 20px; color: var(--accent);
-      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.72rem; padding: 4px 10px;
+      background: rgba(var(--accent-rgb), 0.1); border: 1px solid var(--border-hi);
+      border-radius: 99px; color: var(--accent);
+      font-family: 'Fira Code', monospace;
+      font-weight: 600;
+      box-shadow: var(--shadow-glow);
     }
 
     /* ── HERO ── */
     .hero {
       text-align: center;
-      padding: 60px 20px 40px;
+      padding: 70px 20px 45px;
+      position: relative;
     }
     .hero h1 {
-      font-size: clamp(2rem, 5vw, 3.2rem);
-      font-weight: 700;
-      background: linear-gradient(135deg, #f97316, #fb923c, #fbbf24);
+      font-size: clamp(2.2rem, 6vw, 3.6rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 20%, var(--text-md) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      line-height: 1.2;
+      line-height: 1.15;
       margin-bottom: 16px;
+      letter-spacing: -1px;
+    }
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--accent), #fb923c, #fbbf24);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
     .hero p {
       color: var(--text-md);
-      font-size: 1.05rem;
-      max-width: 560px;
+      font-size: 1.1rem;
+      max-width: 600px;
       margin: 0 auto;
+      line-height: 1.5;
     }
     .supported-types {
       display: flex; flex-wrap: wrap; justify-content: center;
-      gap: 8px; margin-top: 24px;
+      gap: 10px; margin-top: 28px;
     }
     .type-chip {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 0.72rem; padding: 4px 10px;
-      border: 1px solid var(--border); border-radius: 20px;
-      color: var(--text-md); background: var(--bg-raised);
-      transition: all 0.2s;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.75rem; padding: 6px 14px;
+      border: 1px solid var(--border); border-radius: 99px;
+      color: var(--text-md); background: var(--bg-glass);
+      transition: var(--transition);
+      cursor: default;
     }
-    .type-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .type-chip:hover {
+      border-color: var(--accent);
+      color: var(--text-hi);
+      box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.25);
+      transform: translateY(-2px);
+    }
 
     /* ── MAIN LAYOUT ── */
     main {
       flex: 1;
-      max-width: 1100px;
+      max-width: 1150px;
       margin: 0 auto;
-      padding: 0 20px 60px;
+      padding: 0 20px 80px;
       width: 100%;
     }
 
     /* ── DROP ZONE ── */
     #drop-zone {
-      border: 2px dashed var(--border-hi);
-      border-radius: var(--radius);
-      padding: 56px 40px;
+      border: 2px dashed rgba(var(--accent-rgb), 0.35);
+      border-radius: var(--radius-lg);
+      padding: 60px 40px;
       text-align: center;
       cursor: pointer;
-      transition: all 0.25s;
-      background: var(--bg-card);
+      transition: var(--transition);
+      background: var(--bg-glass);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
       position: relative;
       overflow: hidden;
     }
     #drop-zone::before {
       content: '';
       position: absolute; inset: 0;
-      background: radial-gradient(ellipse at 50% 0%, rgba(249,115,22,0.06) 0%, transparent 70%);
+      background: radial-gradient(ellipse at 50% 0%, rgba(var(--accent-rgb), 0.08) 0%, transparent 75%);
       pointer-events: none;
     }
-    #drop-zone.dragover {
+    #drop-zone:hover {
       border-color: var(--accent);
-      background: var(--accent-dim);
-      transform: scale(1.01);
+      box-shadow: var(--shadow-glow), 0 8px 32px rgba(0, 0, 0, 0.4);
+      transform: translateY(-2px);
     }
-    .drop-icon { font-size: 3.5rem; margin-bottom: 16px; display: block; }
+    #drop-zone.dragover {
+      border-color: var(--accent2);
+      background: rgba(var(--accent2-rgb), 0.05);
+      transform: scale(1.015);
+      box-shadow: 0 0 30px rgba(var(--accent2-rgb), 0.2);
+    }
+    .drop-icon {
+      font-size: 3.8rem; margin-bottom: 20px; display: block;
+      transition: transform 0.3s ease;
+    }
+    #drop-zone:hover .drop-icon {
+      transform: scale(1.1) rotate(2deg);
+    }
     .drop-title {
-      font-size: 1.25rem; font-weight: 600;
+      font-size: 1.35rem; font-weight: 700;
       color: var(--text-hi); margin-bottom: 8px;
     }
-    .drop-sub { color: var(--text-md); font-size: 0.9rem; }
+    .drop-sub { color: var(--text-md); font-size: 0.95rem; }
     .drop-sub span {
       color: var(--accent); cursor: pointer; text-decoration: underline;
+      font-weight: 600;
     }
     #file-input { display: none; }
 
     /* ── PROGRESS ── */
     #progress-wrap {
       display: none;
-      margin-top: 20px;
-      background: var(--bg-card);
+      margin-top: 24px;
+      background: var(--bg-glass-hi);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: var(--radius-md);
       padding: 24px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
     }
     .progress-label {
       display: flex; justify-content: space-between;
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 0.82rem; color: var(--text-md);
-      margin-bottom: 10px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.88rem; color: var(--text-hi);
+      margin-bottom: 12px;
+      font-weight: 500;
     }
     .progress-bar-bg {
-      height: 6px; background: var(--bg-raised); border-radius: 99px; overflow: hidden;
+      height: 8px; background: rgba(0,0,0,0.3); border-radius: 99px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.05);
     }
     .progress-bar-fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--accent), #fbbf24);
+      background: linear-gradient(90deg, var(--accent), #fca5a5);
       border-radius: 99px;
       width: 0%;
-      transition: width 0.3s ease;
-      animation: shimmer 1.5s infinite;
+      transition: width 0.25s ease;
     }
-    @keyframes shimmer {
-      0%   { filter: brightness(1); }
-      50%  { filter: brightness(1.3); }
-      100% { filter: brightness(1); }
+
+    /* ── ERROR ── */
+    #error-box {
+      display: none;
+      margin-top: 20px;
+      padding: 16px 24px;
+      background: var(--red-dim);
+      border: 1px solid var(--red-border);
+      border-radius: var(--radius-md);
+      color: #fca5a5;
+      font-size: 0.95rem;
+      font-weight: 500;
+      animation: shake 0.4s ease;
     }
 
     /* ── RESULTS ── */
-    #results { display: none; margin-top: 28px; }
+    #results { display: none; margin-top: 32px; }
 
     .file-banner {
-      display: flex; align-items: center; gap: 16px;
-      background: var(--bg-card);
+      display: flex; align-items: center; gap: 20px;
+      background: var(--bg-glass);
       border: 1px solid var(--border);
-      border-left: 4px solid var(--accent);
-      border-radius: var(--radius);
-      padding: 18px 24px;
-      margin-bottom: 20px;
+      border-left: 5px solid var(--accent);
+      border-radius: var(--radius-md);
+      padding: 22px 28px;
+      margin-bottom: 24px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
     }
-    .file-icon { font-size: 2rem; }
-    .file-info h3 { font-size: 1.1rem; font-weight: 600; }
-    .file-info p { color: var(--text-md); font-size: 0.85rem; margin-top: 2px; }
+    .file-icon {
+      font-size: 2.5rem;
+      filter: drop-shadow(0 0 10px rgba(255,255,255,0.15));
+    }
+    .file-info h3 { font-size: 1.3rem; font-weight: 700; color: var(--text-hi); letter-spacing: -0.5px; }
+    .file-info p { color: var(--text-md); font-size: 0.9rem; margin-top: 4px; font-weight: 500; }
 
     /* tabs */
     .tabs {
-      display: flex; gap: 4px;
+      display: flex; gap: 8px;
       border-bottom: 1px solid var(--border);
-      margin-bottom: 20px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+      padding-bottom: 4px;
     }
     .tab-btn {
-      padding: 10px 20px;
+      padding: 12px 24px;
       background: none; border: none;
       color: var(--text-md); cursor: pointer;
-      font-family: 'Inter', sans-serif; font-size: 0.88rem;
-      border-bottom: 2px solid transparent;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.92rem;
+      font-weight: 600;
+      border-bottom: 3px solid transparent;
       margin-bottom: -1px;
-      transition: all 0.2s;
+      transition: var(--transition);
+      display: inline-flex; align-items: center; gap: 8px;
+      white-space: nowrap;
     }
-    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      text-shadow: 0 0 8px rgba(var(--accent-rgb), 0.2);
+    }
     .tab-btn:hover:not(.active) { color: var(--text-hi); }
+    
+    .tab-badge {
+      background: var(--red);
+      color: #fff;
+      font-size: 0.72rem;
+      padding: 2px 7px;
+      border-radius: 99px;
+      font-weight: 700;
+      font-family: 'Fira Code', monospace;
+    }
+    .tab-badge.green {
+      background: var(--green);
+    }
 
     .tab-pane { display: none; }
-    .tab-pane.active { display: block; }
+    .tab-pane.active { display: block; animation: fadeIn 0.4s ease; }
 
     /* metadata cards */
     .meta-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 20px;
+    }
+    @media (max-width: 640px) {
+      .meta-grid { grid-template-columns: 1fr; }
     }
     .meta-card {
-      background: var(--bg-card);
+      background: var(--bg-glass);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: var(--radius-md);
       overflow: hidden;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      transition: var(--transition);
+    }
+    .meta-card:hover {
+      border-color: rgba(var(--accent-rgb), 0.35);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
     }
     .meta-card-header {
-      background: var(--bg-raised);
-      padding: 12px 16px;
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 0.78rem;
+      background: rgba(31, 41, 55, 0.45);
+      padding: 14px 20px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.82rem;
       color: var(--accent);
+      font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 1px;
       border-bottom: 1px solid var(--border);
@@ -236,133 +340,242 @@
     .meta-row {
       display: flex;
       border-bottom: 1px solid var(--border);
-      font-size: 0.83rem;
+      font-size: 0.88rem;
     }
     .meta-row:last-child { border-bottom: none; }
     .meta-key {
-      width: 45%; padding: 10px 14px;
+      width: 42%; padding: 12px 16px;
       color: var(--text-md);
-      background: rgba(0,0,0,0.15);
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 0.78rem;
+      background: rgba(0,0,0,0.25);
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
       word-break: break-word;
       border-right: 1px solid var(--border);
+      font-weight: 500;
     }
     .meta-val {
-      flex: 1; padding: 10px 14px;
+      flex: 1; padding: 12px 16px;
       color: var(--text-hi);
       word-break: break-all;
+      font-weight: 400;
+    }
+
+    /* GPS Custom Card */
+    .gps-container {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: linear-gradient(180deg, rgba(var(--accent2-rgb), 0.04) 0%, transparent 100%);
+    }
+    .gps-header-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .gps-badge-icon {
+      font-size: 1.8rem;
+      animation: bounce 1.5s infinite alternate;
+    }
+    .gps-title-text {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-hi);
+    }
+    .gps-coords-formatted {
+      font-family: 'Fira Code', monospace;
+      color: var(--accent2);
+      font-size: 0.95rem;
+      font-weight: 600;
+      background: rgba(var(--accent2-rgb), 0.08);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(var(--accent2-rgb), 0.15);
+      text-align: center;
+    }
+    .gps-details-list {
+      font-size: 0.85rem;
+      color: var(--text-md);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .maps-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px;
+      background: linear-gradient(135deg, var(--accent2), #0284c7);
+      color: #fff;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: var(--transition);
+      box-shadow: 0 4px 14px rgba(var(--accent2-rgb), 0.25);
+    }
+    .maps-btn:hover {
+      transform: translateY(-1.5px);
+      box-shadow: 0 6px 20px rgba(var(--accent2-rgb), 0.45);
+      background: linear-gradient(135deg, #0284c7, #0369a1);
     }
 
     /* anomalies */
-    .anomaly-list { display: flex; flex-direction: column; gap: 10px; }
+    .anomaly-list { display: flex; flex-direction: column; gap: 12px; }
     .anomaly-item {
-      display: flex; align-items: flex-start; gap: 12px;
-      padding: 14px 16px;
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 16px 20px;
       background: var(--red-dim);
-      border: 1px solid rgba(239,68,68,0.3);
-      border-radius: var(--radius);
+      border: 1px solid var(--red-border);
+      border-radius: var(--radius-md);
       color: #fca5a5;
-      font-size: 0.88rem;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      animation: slideIn 0.3s ease;
     }
-    .anomaly-icon { color: var(--red); font-size: 1.1rem; flex-shrink: 0; }
+    .anomaly-icon {
+      color: var(--red);
+      font-size: 1.3rem;
+      flex-shrink: 0;
+      text-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+    }
+    .anomaly-msg {
+      font-weight: 500;
+    }
 
     .no-anomalies {
-      text-align: center; padding: 32px;
+      text-align: center; padding: 48px;
+      background: var(--green-dim);
+      border: 1px solid var(--green-border);
+      border-radius: var(--radius-md);
       color: var(--green);
-      font-size: 0.95rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
     }
+    .no-anomalies-icon { font-size: 2.2rem; }
 
     /* json tab */
     .json-wrap {
-      background: var(--bg-card);
+      background: var(--bg-glass-hi);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: var(--radius-md);
       overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
     }
     .json-toolbar {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 10px 16px;
-      background: var(--bg-raised);
+      padding: 12px 20px;
+      background: rgba(0, 0, 0, 0.3);
       border-bottom: 1px solid var(--border);
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 0.75rem; color: var(--text-md);
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem; color: var(--text-md);
     }
     .copy-btn {
-      background: none; border: 1px solid var(--border);
-      color: var(--text-md); padding: 4px 12px;
-      border-radius: 6px; cursor: pointer;
-      font-size: 0.75rem; transition: all 0.2s;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      color: var(--text-hi); padding: 6px 16px;
+      border-radius: var(--radius-sm); cursor: pointer;
+      font-size: 0.8rem; font-weight: 600;
+      transition: var(--transition);
     }
-    .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .copy-btn:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: var(--shadow-glow);
+    }
     pre {
-      padding: 20px;
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 0.8rem;
+      padding: 24px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
       color: #e2e8f0;
       overflow-x: auto;
-      max-height: 520px;
+      max-height: 580px;
       line-height: 1.6;
     }
 
     /* html preview tab */
     #html-iframe {
-      width: 100%; height: 640px;
+      width: 100%; height: 680px;
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: var(--radius-md);
+      background: #0f172a;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
     }
 
     /* reset btn */
     #reset-btn {
       display: block;
-      margin: 24px auto 0;
-      background: none;
-      border: 1px solid var(--border-hi);
-      color: var(--text-md);
-      padding: 10px 28px;
-      border-radius: var(--radius);
+      margin: 32px auto 0;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      color: var(--text-hi);
+      padding: 12px 36px;
+      border-radius: var(--radius-md);
       cursor: pointer;
-      font-size: 0.9rem;
-      transition: all 0.2s;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: var(--transition);
     }
-    #reset-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-    /* error toast */
-    #error-box {
-      display: none;
-      margin-top: 16px;
-      padding: 16px 20px;
-      background: var(--red-dim);
-      border: 1px solid rgba(239,68,68,0.4);
-      border-radius: var(--radius);
-      color: #fca5a5;
-      font-size: 0.9rem;
+    #reset-btn:hover {
+      border-color: var(--accent);
+      background: rgba(var(--accent-rgb), 0.1);
+      box-shadow: var(--shadow-glow);
+      transform: translateY(-1px);
     }
 
     /* footer */
     footer {
       text-align: center;
-      padding: 20px;
+      padding: 28px;
       border-top: 1px solid var(--border);
       color: var(--text-lo);
       font-size: 0.8rem;
-      font-family: 'IBM Plex Mono', monospace;
+      font-family: 'Fira Code', monospace;
+      margin-top: auto;
+    }
+
+    /* Keyframes */
+    @keyframes pulse {
+      0% { opacity: 0.8; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+      100% { opacity: 0.8; transform: scale(1); }
+    }
+    @keyframes bounce {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-5px); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-15px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
     }
   </style>
 </head>
 <body>
 
 <nav>
-  <div class="logo">
+  <div class="logo" id="app-logo">
     <span class="logo-icon">🔍</span>
-    METADATA FORENSICS
+    METADATA<span class="logo-accent">FORENSICS</span>
   </div>
-  <span class="nav-badge">v1.0</span>
+  <span class="nav-badge" id="app-badge">v1.1</span>
 </nav>
 
 <div class="hero">
-  <h1>Uncover Hidden File Metadata</h1>
-  <p>Upload any file to extract embedded metadata — EXIF, GPS, author info, creation timestamps, and more.</p>
+  <h1>Uncover Hidden <span>File Metadata</span></h1>
+  <p>Analyze documents, media, and images locally. Instantly reveal core structure properties, EXIF tags, GPS coordinate geolocations, and tamper signatures.</p>
   <div class="supported-types">
     <span class="type-chip">.jpg / .jpeg</span>
     <span class="type-chip">.png</span>
@@ -370,24 +583,24 @@
     <span class="type-chip">.docx</span>
     <span class="type-chip">.xlsx</span>
     <span class="type-chip">.pptx</span>
-    <span class="type-chip">.mp3</span>
+    <span class="type-chip">.mp3 / .wav / .flac</span>
   </div>
 </div>
 
 <main>
 
   <!-- Drop zone -->
-  <div id="drop-zone" role="button" tabindex="0" aria-label="Upload file">
-    <span class="drop-icon">📂</span>
-    <div class="drop-title">Drop your file here</div>
-    <div class="drop-sub">or <span id="browse-link">browse to upload</span></div>
+  <div id="drop-zone" role="button" tabindex="0" aria-label="Upload File for Forensic Analysis">
+    <span class="drop-icon" id="drop-icon-graphic">📂</span>
+    <div class="drop-title" id="drop-title-text">Drag and drop document or media file</div>
+    <div class="drop-sub">or <span id="browse-link">browse your files</span></div>
     <input type="file" id="file-input" accept="*/*" />
   </div>
 
   <!-- Progress -->
   <div id="progress-wrap">
     <div class="progress-label">
-      <span id="progress-label-text">Analyzing…</span>
+      <span id="progress-label-text">Decrypting Structure…</span>
       <span id="progress-pct">0%</span>
     </div>
     <div class="progress-bar-bg">
@@ -396,7 +609,7 @@
   </div>
 
   <!-- Error -->
-  <div id="error-box"></div>
+  <div id="error-box" role="alert"></div>
 
   <!-- Results -->
   <div id="results">
@@ -408,48 +621,49 @@
       </div>
     </div>
 
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="visual">📊 Visual</button>
-      <button class="tab-btn" data-tab="anomalies">⚠️ Anomalies</button>
-      <button class="tab-btn" data-tab="json">{ } JSON</button>
-      <button class="tab-btn" data-tab="html">🖥 HTML Report</button>
+    <div class="tabs" role="tablist">
+      <button class="tab-btn active" data-tab="visual" id="tab-btn-visual">📊 Visual Card Audit</button>
+      <button class="tab-btn" data-tab="anomalies" id="tab-btn-anomalies">⚠️ Anomalies</button>
+      <button class="tab-btn" data-tab="json" id="tab-btn-json">{ } Raw JSON</button>
+      <button class="tab-btn" data-tab="html" id="tab-btn-html">🖥 HTML Report</button>
     </div>
 
     <!-- Visual -->
-    <div class="tab-pane active" id="tab-visual">
+    <div class="tab-pane active" id="tab-visual" role="tabpanel" aria-labelledby="tab-btn-visual">
       <div class="meta-grid" id="meta-grid"></div>
     </div>
 
     <!-- Anomalies -->
-    <div class="tab-pane" id="tab-anomalies">
+    <div class="tab-pane" id="tab-anomalies" role="tabpanel" aria-labelledby="tab-btn-anomalies">
       <div class="anomaly-list" id="anomaly-list"></div>
     </div>
 
     <!-- JSON -->
-    <div class="tab-pane" id="tab-json">
+    <div class="tab-pane" id="tab-json" role="tabpanel" aria-labelledby="tab-btn-json">
       <div class="json-wrap">
         <div class="json-toolbar">
           <span id="json-size-label">json</span>
-          <button class="copy-btn" id="copy-btn">Copy</button>
+          <button class="copy-btn" id="copy-btn">Copy Output</button>
         </div>
         <pre id="json-output"></pre>
       </div>
     </div>
 
     <!-- HTML Preview -->
-    <div class="tab-pane" id="tab-html">
-      <iframe id="html-iframe" title="HTML Report Preview" sandbox="allow-same-origin"></iframe>
+    <div class="tab-pane" id="tab-html" role="tabpanel" aria-labelledby="tab-btn-html">
+      <iframe id="html-iframe" title="Forensics HTML Report Preview" sandbox="allow-same-origin"></iframe>
     </div>
   </div>
 
-  <button id="reset-btn" style="display:none;">↩ Analyze another file</button>
+  <button id="reset-btn" style="display:none;">↩ Inspect Another File</button>
 
 </main>
 
-<footer>Metadata Forensics Tool · Powered by FastAPI + Python</footer>
+<footer>Metadata Forensics Inspector · Powered by FastAPI + Python · MIT License</footer>
 
 <script>
-  const API = 'http://localhost:8000';
+  // Dynamically resolve API URL relative to hosting origin
+  const API = window.location.origin.startsWith('file') ? 'http://localhost:8000' : window.location.origin;
 
   const dropZone   = document.getElementById('drop-zone');
   const fileInput  = document.getElementById('file-input');
@@ -462,29 +676,30 @@
   const results    = document.getElementById('results');
   const resetBtn   = document.getElementById('reset-btn');
 
-  // file type → icon
+  // File categories to icon
   const typeIcons = {
     image: '🖼️', pdf: '📑', audio: '🎵',
-    video: '🎬', word: '📝', excel: '📊', ppt: '📋', default: '📄'
+    word: '📝', excel: '📊', ppt: '📋', default: '📄'
   };
+
   function iconFor(name) {
     const ext = (name.split('.').pop() || '').toLowerCase();
     if (['jpg','jpeg','png','gif','webp','bmp','tiff'].includes(ext)) return typeIcons.image;
     if (ext === 'pdf') return typeIcons.pdf;
-    if (['mp3','flac','wav','aac','ogg'].includes(ext)) return typeIcons.audio;
-    if (['mp4','mov','avi','mkv'].includes(ext)) return typeIcons.video;
+    if (['mp3','flac','wav','m4a','ogg','wma'].includes(ext)) return typeIcons.audio;
     if (['doc','docx'].includes(ext)) return typeIcons.word;
     if (['xls','xlsx'].includes(ext)) return typeIcons.excel;
     if (['ppt','pptx'].includes(ext)) return typeIcons.ppt;
     return typeIcons.default;
   }
+
   function fmtBytes(b) {
     if (b < 1024) return b + ' B';
     if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
     return (b/1048576).toFixed(2) + ' MB';
   }
 
-  // drag & drop
+  // drag & drop event handling
   dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
   dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
   dropZone.addEventListener('drop', e => {
@@ -497,7 +712,7 @@
   dropZone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
   fileInput.addEventListener('change', e => { if (e.target.files.length) handleFile(e.target.files[0]); });
 
-  // tabs
+  // Navigation Tabs switching
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -507,17 +722,17 @@
     });
   });
 
-  // copy JSON
+  // copy JSON to clipboard
   document.getElementById('copy-btn').addEventListener('click', () => {
     const txt = document.getElementById('json-output').textContent;
     navigator.clipboard.writeText(txt).then(() => {
       const btn = document.getElementById('copy-btn');
       btn.textContent = 'Copied!';
-      setTimeout(() => btn.textContent = 'Copy', 1800);
+      setTimeout(() => btn.textContent = 'Copy Output', 1800);
     });
   });
 
-  // reset
+  // reset form
   resetBtn.addEventListener('click', reset);
 
   function reset() {
@@ -528,7 +743,7 @@
     errorBox.style.display = 'none';
     fileInput.value = '';
     progressFill.style.width = '0%';
-    // reset tabs
+    // reset tab selections
     document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', i===0));
     document.querySelectorAll('.tab-pane').forEach((p,i) => p.classList.toggle('active', i===0));
   }
@@ -540,13 +755,12 @@
     resetBtn.style.display = 'none';
     progressWrap.style.display = 'block';
 
-    // animate progress
     let pct = 0;
     const interval = setInterval(() => {
-      pct = Math.min(pct + Math.random() * 12, 88);
+      pct = Math.min(pct + Math.random() * 14, 90);
       progressFill.style.width = pct + '%';
       progressPct.textContent = Math.round(pct) + '%';
-    }, 180);
+    }, 120);
 
     progressLbl.textContent = `Analyzing ${file.name}…`;
 
@@ -560,13 +774,13 @@
       clearInterval(interval);
       progressFill.style.width = '100%';
       progressPct.textContent = '100%';
-      progressLbl.textContent = 'Complete!';
+      progressLbl.textContent = 'Forensics Complete!';
 
-      await new Promise(r => setTimeout(r, 400));
+      await new Promise(r => setTimeout(r, 300));
       progressWrap.style.display = 'none';
 
       if (!data.success) {
-        showError(data.error || 'Analysis failed.');
+        showError(data.error || 'Forensic analysis failed.');
         return;
       }
 
@@ -575,7 +789,7 @@
     } catch (err) {
       clearInterval(interval);
       progressWrap.style.display = 'none';
-      showError('Could not reach the API at ' + API + '. Is the backend running?');
+      showError('Could not communicate with the backend API at ' + API + '. Please ensure the server is running.');
     }
   }
 
@@ -589,18 +803,45 @@
   function renderResults(file, data) {
     const meta = data.metadata;
 
-    // banner
+    // file banner headers
     document.getElementById('result-icon').textContent = iconFor(file.name);
     document.getElementById('result-filename').textContent = file.name;
     document.getElementById('result-meta').textContent =
-      `${meta.file_type || 'Unknown'} · ${fmtBytes(meta.file_size_bytes || file.size)}`;
+      `${meta.file_type || 'Unknown Type'} · ${fmtBytes(meta.file_size_bytes || file.size)}`;
 
-    // visual cards
+    // metadata cards renderer
     const grid = document.getElementById('meta-grid');
     grid.innerHTML = '';
-    const skip = new Set(['filename','file_type','file_size_bytes','anomalies']);
+    
+    // keys that are handled separately or omitted in the visual grid
+    const skip = new Set(['filename', 'file_type', 'file_size_bytes', 'anomalies', 'gps_coordinates']);
     let hasSections = false;
 
+    // 1. Explicitly render GPS Geolocation first if present
+    if (meta.gps_coordinates && meta.gps_coordinates.latitude !== undefined) {
+      hasSections = true;
+      const gps = meta.gps_coordinates;
+      const card = document.createElement('div');
+      card.className = 'meta-card';
+      card.innerHTML = `
+        <div class="meta-card-header" style="color:var(--accent2); border-bottom-color:rgba(56,189,248,0.3);">📍 GPS GEOLOCATION</div>
+        <div class="gps-container">
+          <div class="gps-header-row">
+            <span class="gps-badge-icon">📍</span>
+            <span class="gps-title-text">Geotag Data Found</span>
+          </div>
+          <div class="gps-coords-formatted">${gps.formatted}</div>
+          <div class="gps-details-list">
+            <div><strong>Latitude:</strong> ${gps.latitude.toFixed(6)}</div>
+            <div><strong>Longitude:</strong> ${gps.longitude.toFixed(6)}</div>
+          </div>
+          <a href="${gps.maps_link}" target="_blank" class="maps-btn">🗺️ Open in Google Maps</a>
+        </div>
+      `;
+      grid.appendChild(card);
+    }
+
+    // 2. Loop through general metadata sections
     for (const [section, value] of Object.entries(meta)) {
       if (skip.has(section) || !value) continue;
       if (typeof value !== 'object' || Array.isArray(value)) continue;
@@ -635,32 +876,66 @@
       grid.appendChild(card);
     }
 
-    if (!hasSections) {
-      grid.innerHTML = '<p style="color:var(--text-md);padding:24px;">No structured metadata sections found.</p>';
+    // If other data elements like page count or encryption exist but aren't objects, map them
+    const individualProperties = {};
+    if (meta.pages !== undefined && meta.pages !== null) individualProperties['Page Count'] = meta.pages;
+    if (meta.encrypted !== undefined && meta.encrypted !== null) individualProperties['Encrypted'] = meta.encrypted ? "Yes (Protected)" : "No";
+    if (meta.status !== undefined && meta.status !== null) individualProperties['Extraction Status'] = meta.status;
+    if (meta.error !== undefined && meta.error !== null) individualProperties['Error Detail'] = meta.error;
+
+    if (Object.keys(individualProperties).length > 0) {
+      hasSections = true;
+      const card = document.createElement('div');
+      card.className = 'meta-card';
+      card.innerHTML = `<div class="meta-card-header">📂 Document Audit Info</div>`;
+      const body = document.createElement('div');
+      body.className = 'meta-card-body';
+      for (const [k, v] of Object.entries(individualProperties)) {
+        const row = document.createElement('div');
+        row.className = 'meta-row';
+        row.innerHTML = `<div class="meta-key">${k}</div><div class="meta-val">${v}</div>`;
+        body.appendChild(row);
+      }
+      card.appendChild(body);
+      grid.appendChild(card);
     }
 
-    // anomalies
+    if (!hasSections) {
+      grid.innerHTML = '<p style="color:var(--text-md);padding:24px;grid-column:1/-1;text-align:center;">No structured metadata sections found.</p>';
+    }
+
+    // anomalies handler
     const anomList = document.getElementById('anomaly-list');
     anomList.innerHTML = '';
     const anomalies = meta.anomalies || [];
+    const anomTab = document.getElementById('tab-btn-anomalies');
+    
     if (anomalies.length === 0) {
-      anomList.innerHTML = '<div class="no-anomalies">✅ No anomalies detected.</div>';
+      anomList.innerHTML = `
+        <div class="no-anomalies">
+          <span class="no-anomalies-icon">🛡️</span>
+          <span>No anomalies or tampering signatures detected. File structure appears clean.</span>
+        </div>`;
+      anomTab.innerHTML = `⚠️ Anomalies <span class="tab-badge green">0</span>`;
+      anomTab.style.color = 'var(--text-md)';
     } else {
       anomalies.forEach(a => {
         const div = document.createElement('div');
         div.className = 'anomaly-item';
-        div.innerHTML = `<span class="anomaly-icon">⚠️</span><span>${a}</span>`;
+        div.innerHTML = `<span class="anomaly-icon">⚠️</span><span class="anomaly-msg">${a}</span>`;
         anomList.appendChild(div);
       });
+      anomTab.innerHTML = `⚠️ Anomalies <span class="tab-badge">${anomalies.length}</span>`;
+      anomTab.style.color = '#fca5a5';
     }
 
-    // JSON tab
+    // JSON output tab
     const jsonStr = data.json_report || JSON.stringify(meta, null, 2);
     document.getElementById('json-output').textContent = jsonStr;
     document.getElementById('json-size-label').textContent =
       `json · ${(new Blob([jsonStr]).size / 1024).toFixed(1)} KB`;
 
-    // HTML preview
+    // HTML preview tab iframe loading
     const iframe = document.getElementById('html-iframe');
     const blob = new Blob([data.html_report], { type: 'text/html' });
     iframe.src = URL.createObjectURL(blob);

@@ -1,0 +1,98 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv
+.env
+.env.local
+.env.*.local
+
+# IDE & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Node & Frontend
+node_modules/
+npm-debug.log
+yarn-error.log
+.next/
+out/
+dist/
+build/
+
+# FastAPI
+.uvicorn_cache/
+
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.swp
+.cache/
+
+# Uploads & temp files
+/backend/uploads/
+/backend/temp/
+/tmp/
+
+# Sample test files (optional - remove if you want to keep them)
+test_*.jpg
+test_*.png
+test_*.pdf
+test_*.docx
+test_*.xlsx
+test_*.mp3
+
+# Environment-specific
+.env.production
+.env.staging
+
+# IDE language servers
+.pylsp_plugins/

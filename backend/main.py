@@ -4,7 +4,14 @@ from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 import sys
 import tempfile
+import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load env variables from root or backend directories
+load_dotenv(Path(__file__).parent.parent / ".env")
+load_dotenv(Path(__file__).parent / ".env")
+
 
 # Ensure backend subpackages are importable regardless of launch method
 sys.path.insert(0, str(Path(__file__).parent))
@@ -13,14 +20,12 @@ from extractors.registry import get_extractor
 from reporters.html_reporter import HTMLReporter
 from reporters.json_reporter import JSONReporter
 
-
 app = FastAPI(
     title="Metadata Forensics API",
     description="Extract and analyze metadata from documents, images, audio, and PDFs",
     version="1.0.0"
 )
 
-# Enable CORS for frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -29,12 +34,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 # Serve frontend static files
 _FRONTEND = Path(__file__).parent.parent / "frontend"
 if _FRONTEND.exists():
     app.mount("/static", StaticFiles(directory=str(_FRONTEND)), name="static")
-
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
@@ -43,12 +46,9 @@ async def root():
         return HTMLResponse(content=index.read_text(encoding="utf-8"))
     return HTMLResponse(content="<h1>Metadata Forensics API</h1><p>Frontend not found.</p>")
 
-
 @app.post("/api/analyze")
 async def analyze_file(file: UploadFile = File(...)):
-    """Upload and analyze a file for metadata"""
     try:
-        # Save temp file
         suffix = Path(file.filename).suffix if file.filename else ""
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
             content = await file.read()
@@ -56,11 +56,11 @@ async def analyze_file(file: UploadFile = File(...)):
             tmp_path = tmp.name
         
         try:
-            # Get appropriate extractor
             extractor = get_extractor(tmp_path)
             metadata = extractor._safe_extract()
-            
-            # Generate reports
+            if file.filename:
+                metadata["filename"] = file.filename
+                
             html_report = HTMLReporter.generate(metadata)
             json_report = JSONReporter.generate(metadata)
             
@@ -71,26 +71,27 @@ async def analyze_file(file: UploadFile = File(...)):
                 "html_report": html_report,
                 "json_report": json_report
             }
-        
         finally:
-            # Clean up temp file
             Path(tmp_path).unlink(missing_ok=True)
     
     except ValueError as e:
         return JSONResponse(
             status_code=400,
-            content={"success": False, "error": f"Unsupported file type: {str(e)}"}
+            content={"success": False, "error": f"Unsupported: {str(e)}"}
         )
     except Exception as e:
         return JSONResponse(
             status_code=500,
-            content={"success": False, "error": f"Analysis failed: {str(e)}"}
+            content={"success": False, "error": f"Failed: {str(e)}"}
         )
-
 
 if __name__ == "__main__":
     import uvicorn
+    host = os.getenv("FASTAPI_HOST", "0.0.0.0")
+    port = int(os.getenv("FASTAPI_PORT", "8000"))
+    reload = os.getenv("FASTAPI_RELOAD", "false").lower() == "true"
+    
     print("✓ Starting Metadata Forensics API...")
-    print("✓ Frontend UI:  http://localhost:8000")
-    print("✓ API docs:     http://localhost:8000/docs")
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=False)
+    print(f"✓ Server: http://{host}:{port}")
+    print(f"✓ Docs: http://{host}:{port}/docs")
+    uvicorn.run("main:app", host=host, port=port, reload=reload)

@@ -18,16 +18,67 @@ class MetadataExtractor(ABC):
         """Extract metadata from file - implemented by subclasses"""
         pass
     
+    def verify_signature(self) -> str | None:
+        """Verify that the file content matches its extension (detect spoofing)"""
+        suffix = self.file_path.suffix.lower()
+        try:
+            with open(self.file_path, "rb") as f:
+                header = f.read(16)
+        except Exception as e:
+            return f"Cannot read file header: {e}"
+        
+        if suffix in ('.jpg', '.jpeg'):
+            if not header.startswith(b'\xff\xd8\xff'):
+                return f"Mismatched signature for JPEG: header starts with {header[:4].hex().upper()}"
+        elif suffix == '.png':
+            if not header.startswith(b'\x89PNG\r\n\x1a\n'):
+                return f"Mismatched signature for PNG: header starts with {header[:4].hex().upper()}"
+        elif suffix == '.gif':
+            if not (header.startswith(b'GIF89a') or header.startswith(b'GIF87a')):
+                return f"Mismatched signature for GIF"
+        elif suffix == '.pdf':
+            if not header.startswith(b'%PDF-'):
+                return f"Mismatched signature for PDF: header starts with {header[:5].decode(errors='replace')}"
+        elif suffix in ('.docx', '.xlsx', '.pptx'):
+            if not header.startswith(b'PK\x03\x04'):
+                return f"Mismatched signature for Office document: header starts with {header[:4].hex().upper()}"
+        elif suffix == '.flac':
+            if not header.startswith(b'fLaC'):
+                return f"Mismatched signature for FLAC"
+        elif suffix == '.ogg':
+            if not header.startswith(b'OggS'):
+                return f"Mismatched signature for OGG"
+        elif suffix == '.wav':
+            if not (header.startswith(b'RIFF') and header[8:12] == b'WAVE'):
+                return f"Mismatched signature for WAV"
+        elif suffix == '.mp3':
+            is_mp3 = header.startswith(b'ID3') or (len(header) > 1 and header[0] == 0xFF and (header[1] & 0xE0) == 0xE0)
+            if not is_mp3:
+                return f"Mismatched signature for MP3: header starts with {header[:4].hex().upper()}"
+        
+        return None
+
     def _safe_extract(self) -> Dict[str, Any]:
         """Safe wrapper with error handling"""
         try:
-            return self.extract()
+            metadata = self.extract()
+            if not isinstance(metadata, dict):
+                metadata = {}
+            if "anomalies" not in metadata:
+                metadata["anomalies"] = []
+            
+            spoof_err = self.verify_signature()
+            if spoof_err:
+                metadata["anomalies"].append(spoof_err)
+                
+            return metadata
         except Exception as e:
             return {
                 "error": str(e),
                 "file": self.filename,
                 "extractor": self.__class__.__name__,
-                "status": "FAILED"
+                "status": "FAILED",
+                "anomalies": [f"Extraction failed: {str(e)}"]
             }
     
     def is_supported(self) -> bool:
@@ -38,4 +89,5 @@ class MetadataExtractor(ABC):
 
 if __name__ == "__main__":
     print("✓ Base extractor class ready")
-    print("✓ Supported methods: extract(), _safe_extract(), is_supported()")
+    print("✓ Supported methods: extract(), _safe_extract(), is_supported(), verify_signature()")
+
