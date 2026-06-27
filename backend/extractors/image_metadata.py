@@ -1,4 +1,4 @@
-from .base import MetadataExtractor
+from extractors.base import MetadataExtractor
 from typing import Dict, Any
 from PIL import Image, IptcImagePlugin
 import piexif
