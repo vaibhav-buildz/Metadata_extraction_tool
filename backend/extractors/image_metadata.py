@@ -153,7 +153,7 @@ class ImageMetadataExtractor(MetadataExtractor):
                     
                     # Tampering Checks
                     # 1. Software checks
-                    software = exif_dict.get("0th", {}).get(305) or exif_dict.get("0th", {}).get(11)
+                    software = exif_dict.get("0th", {}).get(piexif.ImageIFD.Software)
                     if software:
                         soft_str = software.decode('utf-8', errors='ignore') if isinstance(software, bytes) else str(software)
                         soft_str_lower = soft_str.lower()
