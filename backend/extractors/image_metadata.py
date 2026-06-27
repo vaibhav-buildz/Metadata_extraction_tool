@@ -2,7 +2,7 @@ from .base import MetadataExtractor
 from typing import Dict, Any
 from PIL import Image, IptcImagePlugin
 import piexif
-
+from gps_utils import convert_gps_to_decimal
 
 class ImageMetadataExtractor(MetadataExtractor):
     supported_extensions = ('.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff')
@@ -19,28 +19,18 @@ class ImageMetadataExtractor(MetadataExtractor):
             if not (lat_val and lat_ref and lon_val and lon_ref):
                 return {}
             
-            def to_decimal(val):
-                deg, deg_div = val[0]
-                min_val, min_div = val[1]
-                sec, sec_div = val[2]
-                return (deg / deg_div) + (min_val / (min_div * 60.0)) + (sec / (sec_div * 3600.0))
-            
-            lat = to_decimal(lat_val)
-            lon = to_decimal(lon_val)
-            
             lat_ref_str = lat_ref.decode('utf-8', errors='ignore') if isinstance(lat_ref, bytes) else str(lat_ref)
             lon_ref_str = lon_ref.decode('utf-8', errors='ignore') if isinstance(lon_ref, bytes) else str(lon_ref)
             
-            if lat_ref_str.upper() == 'S':
-                lat = -lat
-            if lon_ref_str.upper() == 'W':
-                lon = -lon
+            result = convert_gps_to_decimal(lat_val, lat_ref_str, lon_val, lon_ref_str)
+            if not result:
+                return {}
                 
             return {
-                "latitude": lat,
-                "longitude": lon,
-                "formatted": f"{abs(lat):.6f}° {lat_ref_str.upper()}, {abs(lon):.6f}° {lon_ref_str.upper()}",
-                "maps_link": f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
+                "latitude": result["latitude"],
+                "longitude": result["longitude"],
+                "formatted": result["readable"],
+                "maps_link": f"https://www.google.com/maps/search/?api=1&query={result['latitude']},{result['longitude']}"
             }
         except Exception:
             return {}
@@ -153,6 +143,13 @@ class ImageMetadataExtractor(MetadataExtractor):
                         gps_details = self._parse_gps(exif_dict["GPS"])
                         if gps_details:
                             metadata["gps_coordinates"] = gps_details
+                            # Overwrite the raw tuples in exif_data with the readable string
+                            if "GPSLatitude" in metadata["exif_data"]:
+                                lat_str, _ = gps_details["formatted"].split(", ")
+                                metadata["exif_data"]["GPSLatitude"] = lat_str
+                            if "GPSLongitude" in metadata["exif_data"]:
+                                _, lon_str = gps_details["formatted"].split(", ")
+                                metadata["exif_data"]["GPSLongitude"] = lon_str
                     
                     # Tampering Checks
                     # 1. Software checks

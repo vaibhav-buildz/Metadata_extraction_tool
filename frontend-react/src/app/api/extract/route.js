@@ -6,7 +6,7 @@ export async function POST(request) {
     
     // Attempt to hit the extract endpoint first
     let response = await fetch(
-      'https://metadataextractiontool-production.up.railway.app/api/extract',
+      'http://127.0.0.1:8000/api/extract',
       {
         method: 'POST',
         body: formData,
@@ -16,7 +16,7 @@ export async function POST(request) {
     // Fallback to analyze if extract is a 404
     if (response.status === 404) {
       response = await fetch(
-        'https://metadataextractiontool-production.up.railway.app/api/analyze',
+        'http://127.0.0.1:8000/api/analyze',
         {
           method: 'POST',
           body: formData,
